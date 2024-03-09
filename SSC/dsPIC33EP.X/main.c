@@ -20,13 +20,13 @@
 /* dsPIC related includes */
 #include <xc.h>
 #include <p33Exxxx.h>
-#include "ecat_def.h"
-#include "9252_HW.h"
-#include "applInterface.h"
-#include "ecatappl.h"
+#include "../Common/ecat_def.h"
+#include "../Common/9252_HW.h"
+#include "../Common/applInterface.h"
+#include "../Common/ecatappl.h"
 #include "SPIDriver/SPIDriver.h"
 #include "user.h"
-#include "DSPIC_Sample.h"
+#include "../Common/DSPIC_Sample.h"
 
 // FICD
 #pragma config ICS = PGD2               // ICD Communication Channel Select bits (Communicate on PGEC2 and PGED2)

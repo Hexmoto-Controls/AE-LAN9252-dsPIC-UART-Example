@@ -18,12 +18,10 @@
         <itemPath>../Common/sdoserv.h</itemPath>
         <itemPath>../Common/DSPIC_Sample.h</itemPath>
         <itemPath>../Common/DSPIC_SampleObjects.h</itemPath>
-        <itemPath>UARTDriver/interrupt_manager.h</itemPath>
-        <itemPath>UARTDriver/uart2.h</itemPath>
       </logicalFolder>
       <logicalFolder name="UARTDriver" displayName="UARTDriver" projectFiles="true">
-        <itemPath>../../../AE-LAN9252-dsPIC-SDK-V1.0/SSC/dsPIC33EP.X/UARTDriver/interrupt_manager.h</itemPath>
-        <itemPath>../../../AE-LAN9252-dsPIC-SDK-V1.0/SSC/dsPIC33EP.X/UARTDriver/uart2.h</itemPath>
+        <itemPath>UARTDriver/uart2.h</itemPath>
+        <itemPath>UARTDriver/interrupt_manager.h</itemPath>
       </logicalFolder>
       <itemPath>user.h</itemPath>
     </logicalFolder>
@@ -50,14 +48,12 @@
         <itemPath>SPIDriver/SPIDriver.c</itemPath>
       </logicalFolder>
       <logicalFolder name="UARTDriver" displayName="UARTDriver" projectFiles="true">
-        <itemPath>../../../AE-LAN9252-dsPIC-SDK-V1.0/SSC/dsPIC33EP.X/UARTDriver/interrupt_manager.c</itemPath>
-        <itemPath>../../../AE-LAN9252-dsPIC-SDK-V1.0/SSC/dsPIC33EP.X/UARTDriver/uart2.c</itemPath>
+        <itemPath>UARTDriver/interrupt_manager.c</itemPath>
+        <itemPath>UARTDriver/uart2.c</itemPath>
       </logicalFolder>
       <itemPath>main.c</itemPath>
       <itemPath>PICHW.c</itemPath>
       <itemPath>user.c</itemPath>
-      <itemPath>UARTDriver/interrupt_manager.c</itemPath>
-      <itemPath>UARTDriver/uart2.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -78,7 +74,7 @@
         <targetDevice>dsPIC33EP256MC504</targetDevice>
         <targetHeader></targetHeader>
         <targetPluginBoard></targetPluginBoard>
-        <platformTool>ICD3PlatformTool</platformTool>
+        <platformTool>noID</platformTool>
         <languageToolchain>XC16</languageToolchain>
         <languageToolchainVersion>2.10</languageToolchainVersion>
         <platform>3</platform>
@@ -227,8 +223,13 @@
         <property key="ToolFirmwareOption.UseLatestFirmware" value="true"/>
         <property key="UART 1" value="true"/>
         <property key="UART 2" value="true"/>
+        <property key="debugoptions.debug-startup" value="Use system settings"/>
+        <property key="debugoptions.reset-behaviour" value="Use system settings"/>
         <property key="debugoptions.useswbreakpoints" value="true"/>
+        <property key="event.recorder.enabled" value="false"/>
+        <property key="event.recorder.scvd.files" value=""/>
         <property key="hwtoolclock.frcindebug" value="false"/>
+        <property key="lastid" value=""/>
         <property key="memories.aux" value="false"/>
         <property key="memories.bootflash" value="false"/>
         <property key="memories.configurationmemory" value="true"/>
@@ -609,8 +610,13 @@
         <property key="ToolFirmwareOption.UseLatestFirmware" value="true"/>
         <property key="UART 1" value="true"/>
         <property key="UART 2" value="true"/>
+        <property key="debugoptions.debug-startup" value="Use system settings"/>
+        <property key="debugoptions.reset-behaviour" value="Use system settings"/>
         <property key="debugoptions.useswbreakpoints" value="true"/>
+        <property key="event.recorder.enabled" value="false"/>
+        <property key="event.recorder.scvd.files" value=""/>
         <property key="hwtoolclock.frcindebug" value="false"/>
+        <property key="lastid" value=""/>
         <property key="memories.aux" value="false"/>
         <property key="memories.bootflash" value="false"/>
         <property key="memories.configurationmemory" value="true"/>
