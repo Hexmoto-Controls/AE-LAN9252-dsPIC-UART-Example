@@ -439,7 +439,7 @@ void PDIWriteReg( UINT8 const *WriteBuffer, UINT16 Address, UINT16 Count)
    }
    else
    {
-	SPIWriteRegUsingCSR(WriteBuffer, Address);
+	SPIWriteRegUsingCSR((unsigned char *)WriteBuffer, Address);
    }
     
 }
