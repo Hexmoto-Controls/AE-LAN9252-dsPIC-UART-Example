@@ -62,9 +62,9 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
     // ESC Interrupt
     //0 - positive edge 1- negative edge
 
-    #define    INIT_ESC_INT             {(INTCON2bits.INT0EP) = 1; TRISBbits.TRISB7 = 1; IPC0bits.INT0IP = 3;IFS0bits.INT0IF=0; IEC0bits.INT0IE=1;}; //RB7 - INT0
-    #define    ESC_INT_REQ              (IFS0bits.INT0IF) //ESC Interrupt (INT0) state/flag
-    #define    INT_EL                   (_RB7) //ESC Interrupt input port
+    #define    INIT_ESC_INT        {INTCON2bits.INT0EP = 1;TRISBbits.TRISB2 = 1;IPC0bits.INT0IP = 3;IFS0bits.INT0IF = 0;IEC0bits.INT0IE = 1;};                                 // RB2 - INT0
+    #define    ESC_INT_REQ              (IFS0bits.INT0IF)  // ESC Interrupt (INT0) state/flag
+    #define    INT_EL                   (_RB2) //ESC Interrupt input port
     #define    EscIsr                   (_INT0Interrupt) // primary interrupt vector name
     #define    ACK_ESC_INT              {(ESC_INT_REQ)=0;}
 
@@ -74,26 +74,26 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 
 ///////////////////////////////////////////////////////////////////////////////
 // SYNC0 Interrupt
-    #define    INIT_SYNC0_INT                  {(INTCON2bits.INT1EP) = 0;(IPC5bits.INT1IP) = 2;TRISCbits.TRISC7 = 1;IFS1bits.INT1IF = 0; RPINR0 = 0; RPINR0bits.INT1R = 0x37;}  
-    #define    SYNC0_INT_REQ                   (IFS1bits.INT1IF) //Sync0 Interrupt (INT1) state
-    #define    INT_SYNC0                       (_RC7) //Sync0 Interrupt input port
+    #define    INIT_SYNC0_INT        {(INTCON2bits.INT1EP) = 0;(IPC3bits.INT1IP) = 2;TRISBbits.TRISB6 = 1;IFS0bits.INT1IF = 0;__builtin_write_RPCON(0x0000);RPINR0 = 0;RPINR0bits.INT1R = 0x0026;__builtin_write_RPCON(0x0800); }//RB6->EXT_INT:INT1
+    #define    SYNC0_INT_REQ                   (IFS0bits.INT1IF) //Sync0 Interrupt (INT1) state
+    #define    INT_SYNC0                       (_RB6) //Sync0 Interrupt input port
     #define    Sync0Isr                        (_INT1Interrupt) // primary interrupt vector name
-    #define    DISABLE_SYNC0_INT               {IEC1bits.INT1IE=0;}//{(_INT1IE)=0;}//disable interrupt source INT1
-    #define    ENABLE_SYNC0_INT                {IEC1bits.INT1IE=1;} //enable interrupt source INT1
+    #define    DISABLE_SYNC0_INT               { IEC0bits.INT1IE = 0; }//{(_INT1IE)=0;}//disable interrupt source INT1
+    #define    ENABLE_SYNC0_INT                {IEC0bits.INT1IE = 1;} //enable interrupt source INT1
     #define    ACK_SYNC0_INT                   {(SYNC0_INT_REQ) = 0;}
     #define    SET_SYNC0_INT                   {(SYNC0_INT_REQ) = 1;}
-    #define    SYNC0_INT_PORT_IS_ACTIVE        {(INT_EL) == 0;}
+    #define    SYNC0_INT_PORT_IS_ACTIVE        ((INT_EL) == 0)
     #define    IS_SYNC0_INT_ACTIVE              ((INT_SYNC0) == 0) //0 - fro active low; 1 for hactive high
 
-    #define    INIT_SYNC1_INT                   {(INTCON2bits.INT2EP) = 0;(IPC7bits.INT2IP) = 2; TRISCbits.TRISC6 = 1; IFS1bits.INT2IF =0; RPINR1 =0; RPINR1bits.INT2R = 0x36;}
+    #define    INIT_SYNC1_INT      {(INTCON2bits.INT2EP) = 0;(IPC5bits.INT2IP) = 2;TRISBbits.TRISB7 = 1;IFS1bits.INT2IF = 0;__builtin_write_RPCON(0x0000);RPINR1 = 0;RPINR1bits.INT2R = 0x0027;__builtin_write_RPCON(0x0800);}//RB7->EXT_INT:INT2
     #define    SYNC1_INT_REQ                    (IFS1bits.INT2IF) //(_INT4IF) //Sync1 Interrupt (INT2) state
-    #define    INT_SYNC1                        (_RC6) //Sync1 Interrupt input port
+    #define    INT_SYNC1                        (_RB7) //Sync1 Interrupt input port
     #define    Sync1Isr                         (_INT2Interrupt) // primary interrupt vector name
-    #define    DISABLE_SYNC1_INT                {IEC1bits.INT2IE=0;}//disable interrupt source INT2
-    #define    ENABLE_SYNC1_INT                 {IEC1bits.INT2IE=1;} //enable interrupt source INT2
+    #define    DISABLE_SYNC1_INT                {IEC1bits.INT2IE = 0;}//disable interrupt source INT2
+    #define    ENABLE_SYNC1_INT                 {IEC1bits.INT2IE = 1;} //enable interrupt source INT2
     #define    ACK_SYNC1_INT                    {(SYNC1_INT_REQ) = 0;}
     #define    SET_SYNC1_INT                    {(SYNC1_INT_REQ) = 1;}
-    #define    SYNC1_INT_PORT_IS_ACTIVE         {(INT_EL) == 0;}
+    #define    SYNC1_INT_PORT_IS_ACTIVE         ((INT_EL) == 0)
     #define    IS_SYNC1_INT_ACTIVE              ((INT_SYNC1) == 0) //0 - fro active low; 1 for hactive high
 
 
@@ -101,12 +101,12 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // Hardware timer
 
 #define STOP_ECAT_TIMER         {(T1CONbits.TON) = 0; /*disable timer*/}
-#define INIT_ECAT_TIMER         {(T1CONbits.TCS) = 0; (T1CONbits.TGATE) = 0; \
-                                  (T1CONbits.TCKPS) = 0b01; /* Select 1:8 Prescaler*/ \
-                                  (TMR1) = 0x00; /* Clear timer register*/ \
-                                  PR1 = 8750; /* Load the period value*/ \
-                                  (IPC0bits.T1IP) = 0x01; /* Set Timer 1 Interrupt Priority Level */ \
-                                  (IFS0bits.T1IF) = 0; /* Clear Timer 1 Interrupt Flag */ \
+#define INIT_ECAT_TIMER         {(TMR1) = 0x00; /* Clear timer register*/ \
+                                  PR1 = 0x1F3F; /* Load the period value*/ \
+                                  /*TCKPS 1:1; PRWIP Write complete; TMWIP Write complete; TON enabled; TSIDL disabled; TCS External; TECS FRC; TSYNC disabled; TMWDIS disabled; TGATE disabled; */ \
+                                    T1CON = 0x8302;\
+                                    IEC0bits.T1IE = 1; /* Set Timer 1 Interrupt Priority Level */ \
+                                  IFS0bits.T1IF = 0; /* Clear Timer 1 Interrupt Flag */ \
                                   (IEC0bits.T1IE) = 1; /*Enable Timer1 interrupt*/ }
 
 #define START_ECAT_TIMER         {(T1CONbits.TON) = 1; /*enable timer*/ }
@@ -118,7 +118,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 ------
 -----------------------------------------------------------------------------------------*/
 
-#define LED_ECATRED                    LATDbits.LATD1   //??????????
+#define LED_ECATRED                    ;//LATDbits.LATD1   //??????????
 
 /*  A brief description of a section can be given directly below the section
     banner.

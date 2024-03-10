@@ -11,8 +11,8 @@
 /**
 \file DSPIC_Sample.c
 \brief Implementation
- Created with SSC Tool application parser 1.6.4.0
-\version 0.0.0.1
+
+\version 1.0.0.11
 */
 
 
@@ -22,9 +22,9 @@
 ------
 -----------------------------------------------------------------------------------------*/
 #include "ecat_def.h"
-
 #include "applInterface.h"
-
+#include <xc.h>
+#include "../dsPIC33CK.X/UARTDriver/uart2.h"
 #define _DSPIC__SAMPLE_ 1
 #include "DSPIC_Sample.h"
 #undef _DSPIC__SAMPLE_
@@ -33,6 +33,17 @@
 ------    local types and defines
 ------
 --------------------------------------------------------------------------------------*/
+typedef struct
+{
+    BOOL enableUart; /* Subindex1 - enable uart */
+    BOOL stopSelectionBit; /* Subindex2 - stop selection bit */
+    UINT8 parityAndDataSelectionBits; /* Subindex4 - parity and data selection bits */
+    uint32_t buadRate;
+} UART_CONFIGDATA ;
+
+//Based on default of values of U2MODE (=0xC008) and U2STA (=0x05D0)
+static UART_CONFIGDATA uart_config ={1, 0, 0, 9600}; //these values are given in DSPIC_Sample.xlsx
+
 
 /*-----------------------------------------------------------------------------------------
 ------
@@ -101,8 +112,8 @@ UINT16 APPL_StopMailboxHandler(void)
 /////////////////////////////////////////////////////////////////////////////////////////
 /**
  \param    pIntMask    pointer to the AL Event Mask which will be written to the AL event Mask
-                       register (0x204) when this function is succeeded. The event mask can be adapted
-                       in this function
+                        register (0x204) when this function is succeeded. The event mask can be adapted
+                        in this function
  \return    AL Status Code (see ecatslv.h ALSTATUSCODE_....)
 
  \brief    The function is called in the state transition from PREOP to SAFEOP when
@@ -191,7 +202,6 @@ UINT16 APPL_GenerateMapping(UINT16 *pInputSize,UINT16 *pOutputSize)
     UINT32 *pPDOEntry = NULL;
     UINT16 PDOEntryCnt = 0;
    
-#if MAX_PD_OUTPUT_SIZE > 0
     /*Scan object 0x1C12 RXPDO assign*/
     for(PDOAssignEntryCnt = 0; PDOAssignEntryCnt < sRxPDOassign.u16SubIndex0; PDOAssignEntryCnt++)
     {
@@ -201,7 +211,7 @@ UINT16 APPL_GenerateMapping(UINT16 *pInputSize,UINT16 *pOutputSize)
             PDOSubindex0 = *((UINT16 *)pPDO->pVarPtr);
             for(PDOEntryCnt = 0; PDOEntryCnt < PDOSubindex0; PDOEntryCnt++)
             {
-                pPDOEntry = (UINT32 *)(((UINT16 *)pPDO->pVarPtr) + (OBJ_GetEntryOffset((PDOEntryCnt+1),pPDO)>>4));    //goto PDO entry
+                pPDOEntry = (UINT32 *)((UINT16 *)pPDO->pVarPtr + (OBJ_GetEntryOffset((PDOEntryCnt+1),pPDO)>>3)/2);    //goto PDO entry
                 // we increment the expected output size depending on the mapped Entry
                 OutputSize += (UINT16) ((*pPDOEntry) & 0xFF);
             }
@@ -216,9 +226,7 @@ UINT16 APPL_GenerateMapping(UINT16 *pInputSize,UINT16 *pOutputSize)
     }
 
     OutputSize = (OutputSize + 7) >> 3;
-#endif
 
-#if MAX_PD_INPUT_SIZE > 0
     if(result == 0)
     {
         /*Scan Object 0x1C13 TXPDO assign*/
@@ -230,7 +238,7 @@ UINT16 APPL_GenerateMapping(UINT16 *pInputSize,UINT16 *pOutputSize)
                 PDOSubindex0 = *((UINT16 *)pPDO->pVarPtr);
                 for(PDOEntryCnt = 0; PDOEntryCnt < PDOSubindex0; PDOEntryCnt++)
                 {
-                    pPDOEntry = (UINT32 *)(((UINT16 *)pPDO->pVarPtr) + (OBJ_GetEntryOffset((PDOEntryCnt+1),pPDO)>>4));    //goto PDO entry
+                    pPDOEntry = (UINT32 *)((UINT16 *)pPDO->pVarPtr + (OBJ_GetEntryOffset((PDOEntryCnt+1),pPDO)>>3)/2);    //goto PDO entry
                     // we increment the expected output size depending on the mapped Entry
                     InputSize += (UINT16) ((*pPDOEntry) & 0xFF);
                 }
@@ -245,7 +253,6 @@ UINT16 APPL_GenerateMapping(UINT16 *pInputSize,UINT16 *pOutputSize)
         }
     }
     InputSize = (InputSize + 7) >> 3;
-#endif
 
 #else
 #if _WIN32
@@ -259,7 +266,6 @@ UINT16 APPL_GenerateMapping(UINT16 *pInputSize,UINT16 *pOutputSize)
     *pOutputSize = OutputSize;
     return result;
 }
-
 /////////////////////////////////////////////////////////////////////////////////////////
 /**
 \param      pData  pointer to input process data
@@ -269,11 +275,24 @@ UINT16 APPL_GenerateMapping(UINT16 *pInputSize,UINT16 *pOutputSize)
 *////////////////////////////////////////////////////////////////////////////////////////
 void APPL_InputMapping(UINT16* pData)
 {
-#if _WIN32
-   #pragma message ("Warning: Implement input (Slave->Master) mapping")
-#else
-    #warning "Implement input (Slave->Master) mapping"
-#endif
+   UINT16 j = 0;
+   UINT16 *pTmpData = (UINT16 *)pData;
+
+   /* we go through all entries of the TxPDO Assign object to get the assigned TxPDOs */
+   for (j = 0; j < sTxPDOassign.u16SubIndex0; j++)
+   {
+      switch (sTxPDOassign.aEntries[j])
+      {
+      /* TxPDO 1 */
+      case 0x1A00:
+
+          
+         *pTmpData++ = (((UINT16 *) &Uart_input0x6000)[1]);
+         *pTmpData++ = (((UINT16 *) &Uart_status0x6021)[1]);
+         
+         break;
+      }
+   }
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -285,13 +304,25 @@ void APPL_InputMapping(UINT16* pData)
 *////////////////////////////////////////////////////////////////////////////////////////
 void APPL_OutputMapping(UINT16* pData)
 {
-#if _WIN32
-   #pragma message ("Warning: Implement output (Master->Slave) mapping")
-#else
-    #warning "Implement output (Master->Slave) mapping"
-#endif
-}
+    UINT16 j = 0;
+    UINT16 *pTmpData = (UINT16 *)pData;
 
+    /* we go through all entries of the RxPDO Assign object to get the assigned RxPDOs */
+    for (j = 0; j < sRxPDOassign.u16SubIndex0; j++)
+    {
+        switch (sRxPDOassign.aEntries[j])
+        {
+        /* RxPDO 1*/
+        case 0x1600:
+            ((UINT16 *) &Uart_output0x7000)[1] = *pTmpData++;
+            ((UINT16 *) &Configure_uart0x8000)[1] = *pTmpData++;
+            ((UINT16 *) &Configure_uart0x8000)[2] = *pTmpData++;
+            ((UINT16 *) &Configure_uart0x8000)[3] = *pTmpData++;
+            break;
+        }
+    }
+}
+void APPL_UpdateUARTConfig(void);
 /////////////////////////////////////////////////////////////////////////////////////////
 /**
 \brief    This function will called from the synchronisation ISR 
@@ -299,11 +330,65 @@ void APPL_OutputMapping(UINT16* pData)
 *////////////////////////////////////////////////////////////////////////////////////////
 void APPL_Application(void)
 {
-#if _WIN32
-   #pragma message ("Warning: Implement the slave application")
-#else
-    #warning "Implement the slave application"
-#endif
+    APPL_UpdateUARTConfig();
+  
+    //When UART data is available
+    if(!UART2_ReceiveBufferIsEmpty())
+    {
+        UART2_ReadBuffer(&Uart_input0x6000.Uart_read_buffer, 1);
+        Uart_status0x6021.Rx_ready = true; //update rx_ready to twincat master
+    }
+
+    if(true == Configure_uart0x8000.Tx_ready) //Write UART only if tx_ready is high from twincat master
+    {
+      UART2_WriteBuffer((uint8_t *) &(Uart_output0x7000.Uart_write_buffer), 1);
+    }
+}
+
+
+void APPL_UpdateUARTConfig(void)
+{
+    BOOL isModified = false;
+    if(Configure_uart0x8000.Buadrate != uart_config.buadRate)
+    {
+        uart_config.buadRate = Configure_uart0x8000.Buadrate;
+        isModified = true;
+    }
+
+    if(Configure_uart0x8000.EnableUart != uart_config.enableUart)
+    {
+        uart_config.enableUart = Configure_uart0x8000.EnableUart;
+        isModified = true;
+    }
+
+    if(uart_config.parityAndDataSelectionBits != Configure_uart0x8000.ParityAndDataSelectionBits)
+    {
+        /*
+         0x3 = 9-bit data, no parity
+         0x2 = 8-bit data, odd parity
+         0x1 = 8-bit data, even parity
+         0x0 = 8-bit data, no parity
+         */
+        uart_config.parityAndDataSelectionBits = Configure_uart0x8000.ParityAndDataSelectionBits;
+        isModified = true;
+    }
+
+    if(uart_config.stopSelectionBit!= Configure_uart0x8000.StopSelectionBit)
+    {
+      /* 
+       * uart_config.stopSelectionBit == 1 --> 2 Stop bits
+         uart_config.stopSelectionBit ==0 --> 1 Stop bit
+       */        
+        uart_config.stopSelectionBit = Configure_uart0x8000.StopSelectionBit;
+        isModified = true;
+    }
+            
+    if(isModified)
+    {
+         unsigned short BRG = (69093750 /(4*uart_config.buadRate))-1; //BRGH =1
+            UART2_Initialize(BRG, uart_config.enableUart, uart_config.parityAndDataSelectionBits, uart_config.stopSelectionBit);
+    }
+           
 }
 
 #if EXPLICIT_DEVICE_ID
@@ -311,7 +396,7 @@ void APPL_Application(void)
 /**
  \return    The Explicit Device ID of the EtherCAT slave
 
- \brief     Read the Explicit Device ID (from an external ID switch)
+ \brief     Calculate the Explicit Device ID
 *////////////////////////////////////////////////////////////////////////////////////////
 UINT16 APPL_GetDeviceID()
 {
@@ -325,6 +410,8 @@ UINT16 APPL_GetDeviceID()
 }
 #endif
 
+
+
 #if USE_DEFAULT_MAIN
 /////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -332,23 +419,14 @@ UINT16 APPL_GetDeviceID()
  \brief    This is the main function
 
 *////////////////////////////////////////////////////////////////////////////////////////
-#if _PIC24 && EL9800_HW
+#if _PIC24
 int main(void)
-#elif _WIN32
-int main(int argc, char* argv[])
 #else
 void main(void)
 #endif
 {
     /* initialize the Hardware and the EtherCAT Slave Controller */
 #if FC1100_HW
-#if _WIN32
-    u16FcInstance = 0;
-    if (argc > 1)
-    {
-        u16FcInstance = atoi(argv[1]);
-    }
-#endif
     if(HW_Init())
     {
         HW_Release();
@@ -373,4 +451,5 @@ void main(void)
 }
 #endif //#if USE_DEFAULT_MAIN
 /** @} */
+
 

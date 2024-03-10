@@ -1,27 +1,27 @@
 /**
-  System Interrupts Generated Driver File 
+  @Generated PIC24 / dsPIC33 / PIC32MM MCUs Source File
 
   @Company:
     Microchip Technology Inc.
 
   @File Name:
-    interrupt_manager.h
+    mcc.c
 
   @Summary:
-    This is the generated driver implementation file for setting up the
-    interrupts using PIC24 / dsPIC33 / PIC32MM MCUs
+    This is the mcc.c file generated using PIC24 / dsPIC33 / PIC32MM MCUs
 
   @Description:
-    This source file provides implementations for PIC24 / dsPIC33 / PIC32MM MCUs interrupts.
-    Generation Information : 
-        Product Revision  :  PIC24 / dsPIC33 / PIC32MM MCUs - pic24-dspic-pic32mm : v1.35
-        Device            :  dsPIC33EP256MC504
+    The configuration contents of this file are moved to system.c and this file will be removed in future MCC releases. 
+    Generation Information :
+        Product Revision  :  PIC24 / dsPIC33 / PIC32MM MCUs - 1.171.4
+        Device            :  dsPIC33CK128MP205
     The generated drivers are tested against the following:
-        Compiler          :  XC16 1.31
-        MPLAB             :  MPLAB X 3.60
+        Compiler          :  XC16 v2.10
+        MPLAB             :  MPLAB X v6.05
 */
+
 /*
-    (c) 2016 Microchip Technology Inc. and its subsidiaries. You may use this
+    (c) 2020 Microchip Technology Inc. and its subsidiaries. You may use this
     software and any derivatives exclusively with Microchip products.
 
     THIS SOFTWARE IS SUPPLIED BY MICROCHIP "AS IS". NO WARRANTIES, WHETHER
@@ -43,26 +43,5 @@
 */
 
 /**
-    Section: Includes
+ End of File
 */
-#include <xc.h>
-
-/**
-    void INTERRUPT_Initialize (void)
-*/
-void INTERRUPT_Initialize (void)
-{
-    //    UEVTI: UART2 Event
-    //    Priority: 1
-        IPC47bits.U2EVTIP = 1;
-    //    UTXI: UART2 TX
-    //    Priority: 1
-        IPC7bits.U2TXIP = 1;
-    //    UEI: UART2 Error
-    //    Priority: 1
-        IPC12bits.U2EIP = 1;
-    //    URXI: UART2 RX
-    //    Priority: 1
-        IPC6bits.U2RXIP = 1;
-}
-

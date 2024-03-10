@@ -14,14 +14,14 @@
   @Description:
     This source file provides implementations for PIC24 / dsPIC33 / PIC32MM MCUs interrupts.
     Generation Information : 
-        Product Revision  :  PIC24 / dsPIC33 / PIC32MM MCUs - pic24-dspic-pic32mm : v1.35
-        Device            :  dsPIC33EP256MC504
+        Product Revision  :  PIC24 / dsPIC33 / PIC32MM MCUs - 1.171.4
+        Device            :  dsPIC33CK128MP205
     The generated drivers are tested against the following:
-        Compiler          :  XC16 1.31
-        MPLAB             :  MPLAB X 3.60
+        Compiler          :  XC16 v2.10
+        MPLAB             :  MPLAB X v6.05
 */
 /*
-    (c) 2016 Microchip Technology Inc. and its subsidiaries. You may use this
+    (c) 2020 Microchip Technology Inc. and its subsidiaries. You may use this
     software and any derivatives exclusively with Microchip products.
 
     THIS SOFTWARE IS SUPPLIED BY MICROCHIP "AS IS". NO WARRANTIES, WHETHER
@@ -52,17 +52,4 @@
 */
 void INTERRUPT_Initialize (void)
 {
-    //    UEVTI: UART2 Event
-    //    Priority: 1
-        IPC47bits.U2EVTIP = 1;
-    //    UTXI: UART2 TX
-    //    Priority: 1
-        IPC7bits.U2TXIP = 1;
-    //    UEI: UART2 Error
-    //    Priority: 1
-        IPC12bits.U2EIP = 1;
-    //    URXI: UART2 RX
-    //    Priority: 1
-        IPC6bits.U2RXIP = 1;
 }
-

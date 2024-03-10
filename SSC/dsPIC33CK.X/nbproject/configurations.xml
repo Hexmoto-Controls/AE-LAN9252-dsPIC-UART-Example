@@ -19,6 +19,21 @@
         <itemPath>../Common/DSPIC_Sample.h</itemPath>
         <itemPath>../Common/DSPIC_SampleObjects.h</itemPath>
       </logicalFolder>
+      <logicalFolder name="MCC Generated Files"
+                     displayName="MCC Generated Files"
+                     projectFiles="true">
+        <itemPath>mcc_generated_files/pin_manager.h</itemPath>
+        <itemPath>mcc_generated_files/mcc.h</itemPath>
+        <itemPath>mcc_generated_files/system.h</itemPath>
+        <itemPath>mcc_generated_files/clock.h</itemPath>
+        <itemPath>mcc_generated_files/traps.h</itemPath>
+        <itemPath>mcc_generated_files/reset.h</itemPath>
+        <itemPath>mcc_generated_files/watchdog.h</itemPath>
+        <itemPath>mcc_generated_files/interrupt_manager.h</itemPath>
+        <itemPath>mcc_generated_files/system_types.h</itemPath>
+        <itemPath>mcc_generated_files/reset_types.h</itemPath>
+        <itemPath>mcc_generated_files/spi1.h</itemPath>
+      </logicalFolder>
       <logicalFolder name="UARTDriver" displayName="UARTDriver" projectFiles="true">
         <itemPath>UARTDriver/uart2.h</itemPath>
         <itemPath>UARTDriver/interrupt_manager.h</itemPath>
@@ -43,6 +58,18 @@
         <itemPath>../Common/sdoserv.c</itemPath>
         <itemPath>../Common/DSPIC_Sample.c</itemPath>
       </logicalFolder>
+      <logicalFolder name="MCC Generated Files"
+                     displayName="MCC Generated Files"
+                     projectFiles="true">
+        <itemPath>mcc_generated_files/system.c</itemPath>
+        <itemPath>mcc_generated_files/traps.c</itemPath>
+        <itemPath>mcc_generated_files/pin_manager.c</itemPath>
+        <itemPath>mcc_generated_files/reset.c</itemPath>
+        <itemPath>mcc_generated_files/interrupt_manager.c</itemPath>
+        <itemPath>mcc_generated_files/clock.c</itemPath>
+        <itemPath>mcc_generated_files/mcc.c</itemPath>
+        <itemPath>mcc_generated_files/spi1.c</itemPath>
+      </logicalFolder>
       <logicalFolder name="SPIDriver" displayName="SPIDriver" projectFiles="true">
         <itemPath>SPIDriver/dsPIC33SPIDriver.c</itemPath>
         <itemPath>SPIDriver/SPIDriver.c</itemPath>
@@ -59,6 +86,7 @@
                    displayName="Important Files"
                    projectFiles="false">
       <itemPath>Makefile</itemPath>
+      <itemPath>dsPIC33CK.mc3</itemPath>
     </logicalFolder>
   </logicalFolder>
   <sourceRootList>
@@ -74,7 +102,7 @@
         <targetDevice>dsPIC33CK128MP205</targetDevice>
         <targetHeader></targetHeader>
         <targetPluginBoard></targetPluginBoard>
-        <platformTool>noID</platformTool>
+        <platformTool>pk4hybrid</platformTool>
         <languageToolchain>XC16</languageToolchain>
         <languageToolchainVersion>2.10</languageToolchainVersion>
         <platform>3</platform>
@@ -696,6 +724,10 @@
         <property key="programoptions.uselvpprogramming" value="false"/>
         <property key="voltagevalue" value="3.25"/>
       </Tool>
+      <item path="mcc_generated_files/interrupt_manager.c"
+            ex="true"
+            overriding="false">
+      </item>
     </conf>
   </confs>
 </configurationDescriptor>

@@ -67,10 +67,10 @@ extern "C" {
 	// *****************************************************************************
 	// *****************************************************************************
 	
-
-	#define SPIGet()     SPI1BUF
-	#define CSLOW()      LATBbits.LATB0 = 0; 
-	#define CSHIGH()     LATBbits.LATB0 = 1;
+    #define CSOUT() _TRISB5= 0
+	#define SPIGet()     SPI1BUFL
+	#define CSLOW()      LATBbits.LATB5 = 0; 
+	#define CSHIGH()     LATBbits.LATB5 = 1;
 
 
 	

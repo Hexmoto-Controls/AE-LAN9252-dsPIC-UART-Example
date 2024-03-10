@@ -124,40 +124,43 @@ static uint8_t uart2_rxByteQ[UART2_CONFIG_RX_BYTEQ_LENGTH] ;
 
 void UART2_Initialize(unsigned short BRG, bool enableUART, uint8_t parityAndDataSelectionBits, bool stopSelectionBit)
 {
+    IEC1bits.U2RXIE = 0;
     //Configure UART2
-    TRISCbits.TRISC5 = 1;   //UART Receive, RX
-    TRISBbits.TRISB8 = 0;   //UART Transmit, TX
+    TRISCbits.TRISC4 = 0;   //UART Receive, TX
+    TRISBbits.TRISB8 = 1;   //UART Transmit, RX
     /****************************************************************************
      * Set the PPS
      ***************************************************************************/
-    __builtin_write_OSCCONL(OSCCON & 0xbf); // unlock PPS
+    __builtin_write_RPCON(0x0000); // unlock PPS
 
-    RPOR3bits.RP40R = 0x0003;   //RB8->UART2:U2TX;
-    RPINR19bits.U2RXR = 0x0035;   //RC5->UART2:U2RX;
+    RPINR19bits.U2RXR = 0x0028;    //RB8->UART2:U2RX
+    RPOR10bits.RP52R = 0x0003;    //RC4->UART2:U2TX
 
-    __builtin_write_OSCCONL(OSCCON | 0x40); // lock   PPS
+    __builtin_write_RPCON(0x0800); // lock PPS
     
     
     // Set the UART2 module to the options selected in the user interface.
 
-    // STSEL 1; IREN disabled; PDSEL 8N; UARTEN enabled; RTSMD disabled; USIDL disabled; WAKE disabled; ABAUD disabled; LPBACK disabled; BRGH enabled; URXINV disabled; UEN TX_RX; 
-    U2MODE = (0x8008 & ~(1<<15));  // disabling UARTEN bit   
-    // UTXISEL0 TX_ONE_CHAR; UTXINV disabled; OERR NO_ERROR_cleared; URXISEL RX_ONE_CHAR; UTXBRK COMPLETED; UTXEN disabled; ADDEN disabled; 
-    U2STA = 0x0;
-    U2STAbits.URXISEL = 0x0;
-    // BaudRate = 9600; Frequency = 69093750 Hz; BRG 1798; 
+    // URXEN disabled; RXBIMD RXBKIF flag when Break makes low-to-high transition after being low for at least 23/11 bit periods; UARTEN enabled; MOD Asynchronous 8-bit UART; UTXBRK disabled; BRKOVR TX line driven by shifter; UTXEN disabled; USIDL disabled; WAKE disabled; ABAUD disabled; BRGH enabled; 
+    // Data Bits = 8; Parity = None; Stop Bits = 1 Stop bit sent, 1 checked at RX;
+    U2MODE = (0x8080 & ~(1<<15));  // disabling UARTEN bit   
+    // STSEL 1 Stop bit sent, 1 checked at RX; BCLKMOD disabled; SLPEN disabled; FLO Off; BCLKSEL FOSC/2; C0EN disabled; RUNOVF disabled; UTXINV disabled; URXINV disabled; HALFDPLX disabled; 
+    U2MODEH = 0x00;
+    // OERIE disabled; RXBKIF disabled; RXBKIE disabled; ABDOVF disabled; OERR disabled; TXCIE disabled; TXCIF disabled; FERIE disabled; TXMTIE disabled; ABDOVE disabled; CERIE disabled; CERIF disabled; PERIE disabled; 
+    U2STA = 0x00;
+    // URXISEL RX_ONE_WORD; UTXBE enabled; UTXISEL TX_BUF_EMPTY; URXBE enabled; STPMD disabled; TXWRE disabled; 
+    U2STAH = 0x22;
+    // BaudRate = 9600; Frequency = 100000000 Hz; BRG 2603;
     U2BRG = BRG;
-    // BaudRate = 115200; Frequency = 69093750 Hz; BRG 149; 
-    //U2BRG = 0x95;
+    
    IEC1bits.U2RXIE = 1;
 
    //Make sure to set LAT bit corresponding to TxPin as high before UART initialization
   
    U2MODEbits.UARTEN = enableUART;  // enabling UARTEN bit
-   U2STAbits.UTXEN = 1; 
-   U2MODEbits.STSEL = stopSelectionBit;
-   U2MODEbits.PDSEL = parityAndDataSelectionBits;
-    
+   U2MODEbits.UTXEN = 1;
+   U2MODEbits.URXEN = 1;
+   
    uart2_obj.txHead = uart2_txByteQ;
    uart2_obj.txTail = uart2_txByteQ;
    uart2_obj.rxHead = uart2_rxByteQ;
@@ -168,7 +171,7 @@ void UART2_Initialize(unsigned short BRG, bool enableUART, uint8_t parityAndData
    uart2_obj.rxStatus.s.full = false;
    
    IFS1bits.U2RXIF =0;
-   }
+}
 
 
 
@@ -185,7 +188,7 @@ void __attribute__ ( ( interrupt, no_auto_psv ) ) _U2TXInterrupt ( void )
 
     IFS1bits.U2TXIF = false;
 
-    while(!(U2STAbits.UTXBF == 1))
+    while(!(U2STAHbits.UTXBF == 1))
     {
 
         U2TXREG = *uart2_obj.txHead;
@@ -209,7 +212,7 @@ void __attribute__ ( ( interrupt, no_auto_psv ) ) _U2TXInterrupt ( void )
 
 void __attribute__ ( ( interrupt, no_auto_psv ) ) _U2RXInterrupt( void )
 {
-    while((U2STAbits.URXDA == 1))
+    while(!(U2STAHbits.URXBE == 1))
     {
 
         *uart2_obj.rxTail = U2RXREG;
@@ -237,15 +240,15 @@ void __attribute__ ( ( interrupt, no_auto_psv ) ) _U2RXInterrupt( void )
 }
 
 
-void __attribute__ ( ( interrupt, no_auto_psv ) ) _U2ErrInterrupt ( void )
-{
-    if ((U2STAbits.OERR == 1))
-    {
-        U2STAbits.OERR = 0;
-    }
-
-    IFS4bits.U2EIF = false;
-}
+//void __attribute__ ( ( interrupt, no_auto_psv ) ) _U2ErrInterrupt ( void )
+//{
+//    if ((U2STAbits.OERR == 1))
+//    {
+//        U2STAbits.OERR = 0;
+//    }
+//
+//    IFS3bits.U2EIF = false;
+//}
 
 /**
   Section: UART Driver Client Routines

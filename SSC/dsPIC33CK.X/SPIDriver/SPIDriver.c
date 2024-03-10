@@ -477,6 +477,7 @@ void PDIWriteLAN9252DirectReg( UINT32 Val, UINT16 Address)
 *****************************************************************************/
 void PDI_Init()
 {
+    CSOUT();
     SPIOpen();
     //This is used for delay in read and write functions
     Init_DELAY_1US();

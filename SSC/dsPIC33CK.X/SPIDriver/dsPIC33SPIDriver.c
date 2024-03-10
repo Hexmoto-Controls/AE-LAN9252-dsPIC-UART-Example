@@ -48,13 +48,16 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 inline void SPIPut(UINT8 data)
 {
     // Wait for free buffer
-    //while(!SPI1STATbits.SPITBF);
-    SPI1BUF = data;
+    while( SPI1STATLbits.SPITBF == 1 )
+    {
+
+    }
+    SPI1BUFL = data;
 
     // Wait for data UINT8
-    while(!SPI1STATbits.SPIRBF)
+    while ( SPI1STATLbits.SPIRBE == 1)
     {
-        ;
+    
     }
 }
 /*******************************************************************************
@@ -100,65 +103,70 @@ inline UINT8 SPIReadByte()
 *****************************************************************************/  
 void SPIOpen()
 {
-    //Initialize to zero
-    SPI1STAT = 0;
-    SPI1CON1 = 0;
-//  SPI1CON2 = 0;
-    SPI1BUF = 0;
-    
-    IFS0bits.SPI1IF     = 0;    //Clear the Interrupt Flag
-    IEC0bits.SPI1IE     = 0;    //disable the Interrupt
-     
-    //Enable master as SPI1
-    SPI1CON1bits.MSTEN = 1;     //Master Mode enable
-    SPI1CON1bits.CKP = 0;       //Idle state for clock is a low level; active state is a high level
-    SPI1CON1bits.CKE = 1;       //Serial output data changes on transition from active clock state to Idle clock state
-    SPI1CON1bits.SMP = 1;       //Input data sampled at end of data output time
-    
-    
-    //Set clock speed 8Mhz. 
-    SPI1CON1bits.PPRE = 0b10;    //Primary pre-scale 4:1
-    SPI1CON1bits.SPRE = 0b110;	//Secondary pre-scale 2:1
-    
-    //Configure other lines
-    //Configure CS line as GPIO output
-  
-    TRISBbits.TRISB0 =0;             //Device pin 15 - SS1, RB0
-    LATBbits.LATB0 = 1;             // Set CS high/De-assert CS
-    TRISCbits.TRISC3 = 0;          //Device pin 35 - SCK1/RPI51/RC3
-    //ANSELAbits.ANSA4 = 0;
-    TRISAbits.TRISA4 = 0;         //Device pin 33 - CVREF2O/SDO1/RP20/T1CK/RA4
-    TRISAbits.TRISA9 = 1;
- 
-    //Enable SPI
-    SPI1STATbits.SPIEN = 1;	 
+        /****************************************************************************
+     * Set the PPS
+     ***************************************************************************/
+    __builtin_write_RPCON(0x0000); // unlock PPS
+
+    RPINR20bits.SDI1R = 0x0039;    //RC9->SPI1:SDI1
+    RPINR0bits.INT1R = 0x0026;    //RB6->EXT_INT:INT1
+    RPINR1bits.INT2R = 0x0027;    //RB7->EXT_INT:INT2
+    RPINR20bits.SCK1R = 0x0038;    //RC8->SPI1:SCK1OUT
+    RPOR12bits.RP56R = 0x0006;    //RC8->SPI1:SCK1OUT
+    RPOR20bits.RP72R = 0x0005;    //RD8->SPI1:SDO1
+
+    __builtin_write_RPCON(0x0800); // lock PPS
+
+
+    // AUDEN disabled; FRMEN disabled; AUDMOD I2S; FRMSYPW One clock wide; AUDMONO stereo; FRMCNT 0; MSSEN disabled; FRMPOL disabled; IGNROV disabled; SPISGNEXT not sign-extended; FRMSYNC disabled; URDTEN disabled; IGNTUR disabled; 
+    SPI1CON1H = 0x00;
+    // WLENGTH 0; 
+    SPI1CON2L = 0x00;
+    // SPIROV disabled; FRMERR disabled; 
+    SPI1STATL = 0x00;
+    // SPI1BRGL 5; 
+    SPI1BRGL = 0x05;
+    // SPITBFEN disabled; SPITUREN disabled; FRMERREN disabled; SRMTEN disabled; SPIRBEN disabled; BUSYEN disabled; SPITBEN disabled; SPIROVEN disabled; SPIRBFEN disabled; 
+    SPI1IMSKL = 0x00;
+    // RXMSK 0; TXWIEN disabled; TXMSK 0; RXWIEN disabled; 
+    SPI1IMSKH = 0x00;
+    // SPI1URDTL 0; 
+    SPI1URDTL = 0x00;
+    // SPI1URDTH 0; 
+    SPI1URDTH = 0x00;
+    // SPIEN enabled; DISSDO disabled; MCLKEN FOSC/2; CKP Idle:Low, Active:High; SSEN disabled; MSTEN Master; MODE16 disabled; SMP End; DISSCK disabled; SPIFE Frame Sync pulse precedes; CKE Active to Idle; MODE32 disabled; SPISIDL disabled; ENHBUF enabled; DISSDI disabled; 
+    SPI1CON1L = 0x8321;
 }
 
+#define FCY 100000000UL
+
+#include <libpic30.h>
 void Init_DELAY_1US()
 {
-    T2CONbits.TON = 0; // Disable Timer
-    T2CONbits.TCS = 0; // Select internal instruction cycle clock
-    T2CONbits.TGATE = 0; // Disable Gated Timer mode
-    T2CONbits.TCKPS = 0b00; // Select 1:1 Prescaler
-    TMR2 = 0x00; // Clear timer register
-    PR2 = 70; // Load the period value
-
-    IFS0bits.T2IF = 0; // Clear Timer 1 Interrupt Flag
-    IEC0bits.T2IE = 0; // Enable Timer1 interrupt
-    T2CONbits.TON = 0; // Stop Timer
+//    T2CONbits.TON = 0; // Disable Timer
+//    T2CONbits.TCS = 0; // Select internal instruction cycle clock
+//    T2CONbits.TGATE = 0; // Disable Gated Timer mode
+//    T2CONbits.TCKPS = 0b00; // Select 1:1 Prescaler
+//    TMR2 = 0x00; // Clear timer register
+//    PR2 = 70; // Load the period value
+//
+//    IFS0bits.T2IF = 0; // Clear Timer 1 Interrupt Flag
+//    IEC0bits.T2IE = 0; // Enable Timer1 interrupt
+//    T2CONbits.TON = 0; // Stop Timer
 }
 
 void DELAY_1US()
 {
-	PR2 = 70; // Load the period value
-    T2CONbits.TON = 1; // Start Timer
-    while(!IFS0bits.T2IF)
-    {
-        ;
-    }
-    T2CONbits.TON = 0; // Stop Timer
-    IFS0bits.T2IF = 0;
-	TMR2 = 0x00;    
+    __delay_us(1);
+//	PR2 = 70; // Load the period value
+//    T2CONbits.TON = 1; // Start Timer
+//    while(!IFS0bits.T2IF)
+//    {
+//        ;
+//    }
+//    T2CONbits.TON = 0; // Stop Timer
+//    IFS0bits.T2IF = 0;
+//	TMR2 = 0x00;    
 }
 
 
