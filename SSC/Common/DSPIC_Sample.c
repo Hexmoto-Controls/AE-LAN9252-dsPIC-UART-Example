@@ -1,15 +1,10 @@
-/*
-* This source file is part of the EtherCAT Slave Stack Code licensed by Beckhoff Automation GmbH & Co KG, 33415 Verl, Germany.
-* The corresponding license agreement applies. This hint shall not be removed.
-*/
-
 /**
-\addtogroup DSPIC_Sample DSPIC_Sample
+\addtogroup sample_app sample_app
 @{
 */
 
 /**
-\file DSPIC_Sample.c
+\file sample_app.c
 \brief Implementation
 
 \version 1.0.0.11
@@ -22,9 +17,9 @@
 ------
 -----------------------------------------------------------------------------------------*/
 #include "ecat_def.h"
+
 #include "applInterface.h"
-#include <xc.h>
-#include "../dsPIC33CK.X/UARTDriver/uart2.h"
+
 #define _DSPIC__SAMPLE_ 1
 #include "DSPIC_Sample.h"
 #undef _DSPIC__SAMPLE_
@@ -33,24 +28,15 @@
 ------    local types and defines
 ------
 --------------------------------------------------------------------------------------*/
-typedef struct
-{
-    BOOL enableUart; /* Subindex1 - enable uart */
-    BOOL stopSelectionBit; /* Subindex2 - stop selection bit */
-    UINT8 parityAndDataSelectionBits; /* Subindex4 - parity and data selection bits */
-    uint32_t buadRate;
-} UART_CONFIGDATA ;
-
-//Based on default of values of U2MODE (=0xC008) and U2STA (=0x05D0)
-static UART_CONFIGDATA uart_config ={1, 0, 0, 9600}; //these values are given in DSPIC_Sample.xlsx
-
 
 /*-----------------------------------------------------------------------------------------
 ------
 ------    local variables and constants
 ------
 -----------------------------------------------------------------------------------------*/
-
+UINT32 Trigger;
+UINT32 Value;
+UINT32 twice;
 /*-----------------------------------------------------------------------------------------
 ------
 ------    application specific functions
@@ -275,24 +261,16 @@ UINT16 APPL_GenerateMapping(UINT16 *pInputSize,UINT16 *pOutputSize)
 *////////////////////////////////////////////////////////////////////////////////////////
 void APPL_InputMapping(UINT16* pData)
 {
-   UINT16 j = 0;
-   UINT16 *pTmpData = (UINT16 *)pData;
-
-   /* we go through all entries of the TxPDO Assign object to get the assigned TxPDOs */
-   for (j = 0; j < sTxPDOassign.u16SubIndex0; j++)
+    UINT32 *temp = pData;
+   if(Trigger ==0)
    {
-      switch (sTxPDOassign.aEntries[j])
-      {
-      /* TxPDO 1 */
-      case 0x1A00:
-
-          
-         *pTmpData++ = (((UINT16 *) &Uart_input0x6000)[1]);
-         *pTmpData++ = (((UINT16 *) &Uart_status0x6021)[1]);
-         
-         break;
-      }
+           *temp = (UINT32)0;
    }
+   else
+   {
+            *temp += Trigger;
+   }
+    *(temp+1)= twice;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -304,25 +282,12 @@ void APPL_InputMapping(UINT16* pData)
 *////////////////////////////////////////////////////////////////////////////////////////
 void APPL_OutputMapping(UINT16* pData)
 {
-    UINT16 j = 0;
-    UINT16 *pTmpData = (UINT16 *)pData;
-
-    /* we go through all entries of the RxPDO Assign object to get the assigned RxPDOs */
-    for (j = 0; j < sRxPDOassign.u16SubIndex0; j++)
-    {
-        switch (sRxPDOassign.aEntries[j])
-        {
-        /* RxPDO 1*/
-        case 0x1600:
-            ((UINT16 *) &Uart_output0x7000)[1] = *pTmpData++;
-            ((UINT16 *) &Configure_uart0x8000)[1] = *pTmpData++;
-            ((UINT16 *) &Configure_uart0x8000)[2] = *pTmpData++;
-            ((UINT16 *) &Configure_uart0x8000)[3] = *pTmpData++;
-            break;
-        }
-    }
+    UINT32 *temp = pData;
+	 Trigger= *temp++;
+     Value= *temp++;
+     twice = Value*2;
 }
-void APPL_UpdateUARTConfig(void);
+
 /////////////////////////////////////////////////////////////////////////////////////////
 /**
 \brief    This function will called from the synchronisation ISR 
@@ -330,65 +295,7 @@ void APPL_UpdateUARTConfig(void);
 *////////////////////////////////////////////////////////////////////////////////////////
 void APPL_Application(void)
 {
-    APPL_UpdateUARTConfig();
-  
-    //When UART data is available
-    if(!UART2_ReceiveBufferIsEmpty())
-    {
-        UART2_ReadBuffer(&Uart_input0x6000.Uart_read_buffer, 1);
-        Uart_status0x6021.Rx_ready = true; //update rx_ready to twincat master
-    }
 
-    if(true == Configure_uart0x8000.Tx_ready) //Write UART only if tx_ready is high from twincat master
-    {
-      UART2_WriteBuffer((uint8_t *) &(Uart_output0x7000.Uart_write_buffer), 1);
-    }
-}
-
-
-void APPL_UpdateUARTConfig(void)
-{
-    BOOL isModified = false;
-    if(Configure_uart0x8000.Buadrate != uart_config.buadRate)
-    {
-        uart_config.buadRate = Configure_uart0x8000.Buadrate;
-        isModified = true;
-    }
-
-    if(Configure_uart0x8000.EnableUart != uart_config.enableUart)
-    {
-        uart_config.enableUart = Configure_uart0x8000.EnableUart;
-        isModified = true;
-    }
-
-    if(uart_config.parityAndDataSelectionBits != Configure_uart0x8000.ParityAndDataSelectionBits)
-    {
-        /*
-         0x3 = 9-bit data, no parity
-         0x2 = 8-bit data, odd parity
-         0x1 = 8-bit data, even parity
-         0x0 = 8-bit data, no parity
-         */
-        uart_config.parityAndDataSelectionBits = Configure_uart0x8000.ParityAndDataSelectionBits;
-        isModified = true;
-    }
-
-    if(uart_config.stopSelectionBit!= Configure_uart0x8000.StopSelectionBit)
-    {
-      /* 
-       * uart_config.stopSelectionBit == 1 --> 2 Stop bits
-         uart_config.stopSelectionBit ==0 --> 1 Stop bit
-       */        
-        uart_config.stopSelectionBit = Configure_uart0x8000.StopSelectionBit;
-        isModified = true;
-    }
-            
-    if(isModified)
-    {
-         unsigned short BRG = (69093750 /(4*uart_config.buadRate))-1; //BRGH =1
-            UART2_Initialize(BRG, uart_config.enableUart, uart_config.parityAndDataSelectionBits, uart_config.stopSelectionBit);
-    }
-           
 }
 
 #if EXPLICIT_DEVICE_ID
